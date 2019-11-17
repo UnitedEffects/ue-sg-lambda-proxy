@@ -12,6 +12,8 @@ provider:
     CUSTOM_DOMAIN: ${env:NODE_ENV, file(./.env/env.${self:provider.env}.json):CUSTOM_DOMAIN}
     DOMAIN: ${env:SWAGGER, file(./.env/env.${self:provider.env}.json):DOMAIN}
     SG_API: ${env:PROTOCOL, file(./.env/env.${self:provider.env}.json):SG_API}
+    SG_URL: ${env:PROTOCOL, file(./.env/env.${self:provider.env}.json):SG_URL}
+    SG_VERSION: ${env:PROTOCOL, file(./.env/env.${self:provider.env}.json):SG_VERSION}
 
 package:
   exclude:

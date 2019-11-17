@@ -1,9 +1,6 @@
 import passport from 'passport';
 import {Strategy as BearerStrategy} from 'passport-http-bearer';
-import promisify from 'es6-promisify'; //todo remove
-import rq from 'request'; //todo replace with axios
-
-const request = promisify(rq); //todo replace with axios and remove
+import axios from 'axios';
 
 import config from '../config';
 function isJson(check){
@@ -37,26 +34,17 @@ passport.use('bearer', new BearerStrategy(
     }
 ));
 
-function getBearerToken(accessToken, callback){
-    const reqOptions = {
-        method: 'GET',
-        uri: `${config.DOMAIN}/api/validate`,
-        auth: {
-            bearer: accessToken
-        }
-    };
-    //todo replace request with axios
-    request(reqOptions)
-        .then(function (response) {
-            if (response.statusCode !== 200) return callback(null, false);
-            const returned = (isJson(response.body)) ? JSON.parse(response.body) : response.body;
-            if(returned.data) return callback(null, returned.data);
-            return callback(null, false);
-        })
-        .catch(function (error) {
-            error["detail"] = 'Bearer Auth validation error from domain service.';
-            return callback(error, false);
-        });
+async function getBearerToken(accessToken, callback){
+    try {
+        const response = await axios.get(`${config.DOMAIN}/api/validate`, { headers: { authorization: `bearer ${accessToken}`}});
+        if (response.status !== 200) return callback(null, false);
+        const returned = (isJson(response.data)) ? JSON.parse(response.data) : response.data;
+        if(returned.data) return callback(null, returned.data);
+        return callback(null, false);
+    } catch (error) {
+        error["detail"] = 'Bearer Auth validation error from domain service.';
+        return callback(error, false);
+    }
 }
 
 passport.serializeUser((user, done) => {
