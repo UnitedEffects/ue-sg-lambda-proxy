@@ -12,7 +12,8 @@ const config = {
     CUSTOM_DOMAIN: process.env.CUSTOM_DOMAIN || envVars.CUSTOM_DOMAIN || 'example.com',
     OIDC: process.env.OIDC || envVars.OIDC || 'https://qa.ueauth.io/root',
     OIDC_CLIENT: process.env.OIDC_CLIENT || envVars.OIDC_CLIENT || undefined,
-    OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET || envVars.OIDC_CLIENT_SECRET || undefined
+    OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET || envVars.OIDC_CLIENT_SECRET || undefined,
+    NOTIFY_PW_ID: process.env.NOTIFY_PW_ID || envVars.NOTIFY_PW_ID || undefined
 };
 
 module.exports = config;

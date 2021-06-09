@@ -29,17 +29,23 @@ app.get('/ue', (req, res) => {
 });
 
 app.post('/ue/notify', auth.isOIDCAuthenticated, async (req, res) => {
-    // todo - auth works, now lets send emails...
     try {
-        // body to send for email request
+        //todo switch for all template types...
         if(req.body.iss !== req.user.iss) throw Boom.unauthorized();
         const msg = {
-            to: req.body.recipientEmail, // Change to your recipient
-            from: 'noreply@unitedeffects.com', // Change to your verified sender
+            to: req.body.recipientEmail,
+            from: 'noreply@unitedeffects.com',
             subject: req.body.subject,
             text: req.body.message,
             html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+            templateId: config.NOTIFY_PW_ID,
+            dynamic_template_data: {
+                screenUrl: req.body.screenUrl,
+                message: req.body.message,
+                subject: req.body.subject
+            }
         }
+
         const response = await sendgrid.send(msg);
         return res.json(response.body);
     } catch (error) {
