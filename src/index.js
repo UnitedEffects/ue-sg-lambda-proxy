@@ -1,11 +1,14 @@
 import 'regenerator-runtime/runtime';
 import serverless from 'serverless-http';
+import Boom from '@hapi/boom'
 import express from 'express';
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import auth from './auth/api';
+import sendgrid from '@sendgrid/mail';
 
 const config = require('./config');
+sendgrid.setApiKey(config.SG_API);
 
 const app = express();
 
@@ -22,13 +25,31 @@ app.use((req, res, next) => {
  * These are United Effects specific endpoints. If you want to use this code, just remove lines 24 - 45
  */
 app.get('/ue', (req, res) => {
-    console.info(req.headers);
-    console.info(req.user);
     res.status(200).send('running');
 });
 
 app.post('/ue/notify', auth.isOIDCAuthenticated, async (req, res) => {
-    res.json({ this: 'worked', identity: req.user })
+    // todo - auth works, now lets send emails...
+    try {
+        // body to send for email request
+        if(req.body.iss !== req.user.iss) throw Boom.unauthorized();
+        const msg = {
+            to: req.body.recipientEmail, // Change to your recipient
+            from: 'noreply@unitedeffects.com', // Change to your verified sender
+            subject: req.body.subject,
+            text: req.body.message,
+            html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+        }
+        const response = await sendgrid.send(msg);
+        return res.json(response.body);
+    } catch (error) {
+        if (error.response) {
+            console.error(error.response);
+            return res.status(error.response.status).json(error.response.data);
+        }
+        console.error(error);
+        return res.status(500).json({data: error.message});
+    }
 })
 
 app.post('/ue/mail/send', auth.isBearerAuthenticated, async (req, res) => {
