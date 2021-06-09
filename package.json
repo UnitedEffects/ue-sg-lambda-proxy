@@ -8,14 +8,18 @@
   "private": false,
   "scripts": {
     "start": "node ./dist/index.js",
+    "dev": "yarn && babel src -d dist && nodemon ./dist/index.js",
     "build": "yarn && babel src -d dist",
     "package": "yarn && babel src -d dist && sls package",
     "deploy": "yarn && babel src -d dist && sls deploy"
   },
   "dependencies": {
     "axios": "^0.21.1",
+    "@hapi/boom": "^9.1.2",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "node-jwk": "^0.1.0",
     "passport": "^0.4.0",
     "passport-http-bearer": "^1.0.1",
     "regenerator-runtime": "^0.13.3",

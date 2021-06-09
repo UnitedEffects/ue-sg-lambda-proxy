@@ -22,8 +22,14 @@ app.use((req, res, next) => {
  * These are United Effects specific endpoints. If you want to use this code, just remove lines 24 - 45
  */
 app.get('/ue', (req, res) => {
+    console.info(req.headers);
+    console.info(req.user);
     res.status(200).send('running');
 });
+
+app.post('/ue/notify', auth.isOIDCAuthenticated, async (req, res) => {
+    res.json({ this: 'worked', identity: req.user })
+})
 
 app.post('/ue/mail/send', auth.isBearerAuthenticated, async (req, res) => {
     try {
@@ -74,5 +80,5 @@ app.use(`/${config.SG_VERSION}/*`, auth.isBearerAuthenticated, async (req, res) 
 
 });
 
-//app.listen(8080); // <-- for testing
-module.exports.handler = serverless(app);
+app.listen(8080); // <-- for testing
+//module.exports.handler = serverless(app);
