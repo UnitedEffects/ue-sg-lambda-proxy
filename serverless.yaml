@@ -14,7 +14,8 @@ provider:
     SG_API: ${env:PROTOCOL, file(./.env/env.${self:provider.env}.json):SG_API}
     SG_URL: ${env:PROTOCOL, file(./.env/env.${self:provider.env}.json):SG_URL}
     SG_VERSION: ${env:PROTOCOL, file(./.env/env.${self:provider.env}.json):SG_VERSION}
-
+    OIDC: ${env:OIDC, file(./.env/env.${self:provider.env}.json):OIDC}
+    OIDC_CLIENT: ${env:OIDC_CLIENT, file(./.env/env.${self:provider.env}.json):OIDC_CLIENT}
 package:
   exclude:
     - src/**
