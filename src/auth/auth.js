@@ -134,10 +134,14 @@ async function getBearerToken(accessToken, callback){
     }
 }
 
-async function getIssuerFromWK(wk) {
-    const data = await axios.get(wk);
-    console.info(data);
-    return data.issuer;
+async function getWK(wk) {
+    const result = await axios.get(wk);
+    return result.data;
+}
+
+async function getKeys(url) {
+    const result = await axios.get(url)
+    return result.data;
 }
 
 passport.use('oidc-root', new BearerStrategy({
@@ -147,15 +151,18 @@ passport.use('oidc-root', new BearerStrategy({
         try {
             // subject (user) auth group
             // this is distinct from the authGroup which was specified in the request and now under req.authGroup
-            const wellKnown = `${config.OIDC}/.well-known/openid-configuration`
-            const issuer = await getIssuerFromWK(wellKnown);
+            const wellKnownURL = `${config.OIDC}/.well-known/openid-configuration`
+            const wellKnown = await getWK(wellKnownURL);
+            const issuer = wellKnown.issuer;
+            if(!issuer) return next(null, false);
             const issueParts = issuer.split('/');
             const subAG = issueParts[issueParts.length-1];
             if(isJWT(token)){
                 const preDecoded = jwt.decode(token, {complete: true});
-                const pub = { keys: subAG.config.keys };
+                const pub = await getKeys(wellKnown.jwks_uri);
                 const myKeySet = njwk.JWKSet.fromJSON(JSON.stringify(pub));
                 const jwk = myKeySet.findKeyById(preDecoded.header.kid);
+                if(!jwk) return next(null, false);
                 const myPubKey = jwk.key.toPublicKeyPEM();
                 return jwt.verify(token, myPubKey, async (err, decoded) => {
                     if(err) {
