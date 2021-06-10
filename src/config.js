@@ -9,7 +9,12 @@ const config = {
     SG_API: process.env.SG_API || envVars.SG_API || 'SENDGRIDAPIID',
     SG_URL: process.env.SG_URL || envVars.SG_URL || 'api.sendgrid.com',
     SG_VERSION: process.env.SG_VERSION || envVars.SG_VERSION || 'v3',
-    CUSTOM_DOMAIN: process.env.CUSTOM_DOMAIN || envVars.CUSTOM_DOMAIN || 'example.com'
+    CUSTOM_DOMAIN: process.env.CUSTOM_DOMAIN || envVars.CUSTOM_DOMAIN || 'example.com',
+    OIDC: process.env.OIDC || envVars.OIDC || 'https://qa.ueauth.io/root',
+    OIDC_CLIENT: process.env.OIDC_CLIENT || envVars.OIDC_CLIENT || undefined,
+    OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET || envVars.OIDC_CLIENT_SECRET || undefined,
+    NOTIFY_TEMPLATE_1: process.env.NOTIFY_TEMPLATE_1 || envVars.NOTIFY_TEMPLATE_1 || undefined,
+    NOTIFY_TEMPLATE_2: process.env.NOTIFY_TEMPLATE_2 || envVars.NOTIFY_TEMPLATE_2 || undefined
 };
 
 module.exports = config;

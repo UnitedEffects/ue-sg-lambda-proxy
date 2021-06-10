@@ -1,13 +1,18 @@
 import 'regenerator-runtime/runtime';
 import serverless from 'serverless-http';
+import Boom from '@hapi/boom'
 import express from 'express';
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import auth from './auth/api';
+import sendgrid from '@sendgrid/mail';
 
+const pk = require('../package.json');
 const config = require('./config');
+sendgrid.setApiKey(config.SG_API);
 
 const app = express();
+const NOREPLY = 'noreply@unitedeffects.com';
 
 app.use(bodyParser.json({limit: '1mb'}));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -22,8 +27,90 @@ app.use((req, res, next) => {
  * These are United Effects specific endpoints. If you want to use this code, just remove lines 24 - 45
  */
 app.get('/ue', (req, res) => {
-    res.status(200).send('running');
+    res.status(200).json({status: 'running', version: pk.version});
 });
+
+app.post('/ue/notify', auth.isOIDCAuthenticated, async (req, res) => {
+    try {
+        if(req.body.iss !== req.user.iss) throw Boom.unauthorized();
+        let msg = {};
+        switch (req.body.type) {
+            case 'forgotPassword':
+            case 'passwordless':
+            case 'verify':
+            case 'invite':
+                msg = {
+                    to: req.body.recipientEmail,
+                    from: NOREPLY,
+                    subject: req.body.subject,
+                    text: req.body.message,
+                    html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+                    templateId: config.NOTIFY_TEMPLATE_1,
+                    dynamic_template_data: {
+                        screenUrl: req.body.screenUrl,
+                        message: req.body.message,
+                        subject: req.body.subject
+                    }
+                };
+                break;
+            case ('general'):
+                if(req.body.screenUrl) {
+                    msg = {
+                        to: req.body.recipientEmail,
+                        from: NOREPLY,
+                        subject: req.body.subject,
+                        text: req.body.message,
+                        html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+                        templateId: config.NOTIFY_TEMPLATE_1,
+                        dynamic_template_data: {
+                            screenUrl: req.body.screenUrl,
+                            message: req.body.message,
+                            subject: req.body.subject
+                        }
+                    };
+                    break;
+                } else {
+                    msg = {
+                        to: req.body.recipientEmail,
+                        from: NOREPLY,
+                        subject: req.body.subject,
+                        text: req.body.message,
+                        html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+                        templateId: config.NOTIFY_TEMPLATE_2,
+                        dynamic_template_data: {
+                            message: req.body.message,
+                            subject: req.body.subject
+                        }
+                    };
+                    break;
+                }
+            default:
+                msg = {
+                    to: req.body.recipientEmail,
+                    from: NOREPLY,
+                    subject: req.body.subject,
+                    text: req.body.message,
+                    html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+                    templateId: config.NOTIFY_TEMPLATE_2,
+                    dynamic_template_data: {
+                        message: req.body.message,
+                        subject: req.body.subject
+                    }
+                };
+                break;
+        }
+
+        const response = await sendgrid.send(msg);
+        return res.json(response.body);
+    } catch (error) {
+        if (error.response) {
+            console.error(error.response);
+            return res.status(error.response.status).json(error.response.data);
+        }
+        console.error(error);
+        return res.status(500).json({data: error.message});
+    }
+})
 
 app.post('/ue/mail/send', auth.isBearerAuthenticated, async (req, res) => {
     try {
