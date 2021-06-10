@@ -7,10 +7,12 @@ import axios from 'axios';
 import auth from './auth/api';
 import sendgrid from '@sendgrid/mail';
 
+const pk = require('../package.json');
 const config = require('./config');
 sendgrid.setApiKey(config.SG_API);
 
 const app = express();
+const NOREPLY = 'noreply@unitedeffects.com';
 
 app.use(bodyParser.json({limit: '1mb'}));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -25,25 +27,77 @@ app.use((req, res, next) => {
  * These are United Effects specific endpoints. If you want to use this code, just remove lines 24 - 45
  */
 app.get('/ue', (req, res) => {
-    res.status(200).send('running');
+    res.status(200).json({status: 'running', version: pk.version});
 });
 
 app.post('/ue/notify', auth.isOIDCAuthenticated, async (req, res) => {
     try {
-        //todo switch for all template types...
         if(req.body.iss !== req.user.iss) throw Boom.unauthorized();
-        const msg = {
-            to: req.body.recipientEmail,
-            from: 'noreply@unitedeffects.com',
-            subject: req.body.subject,
-            text: req.body.message,
-            html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
-            templateId: config.NOTIFY_PW_ID,
-            dynamic_template_data: {
-                screenUrl: req.body.screenUrl,
-                message: req.body.message,
-                subject: req.body.subject
-            }
+        let msg = {};
+        switch (req.body.type) {
+            case 'forgotPassword':
+            case 'passwordless':
+            case 'verify':
+            case 'invite':
+                msg = {
+                    to: req.body.recipientEmail,
+                    from: NOREPLY,
+                    subject: req.body.subject,
+                    text: req.body.message,
+                    html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+                    templateId: config.NOTIFY_TEMPLATE_1,
+                    dynamic_template_data: {
+                        screenUrl: req.body.screenUrl,
+                        message: req.body.message,
+                        subject: req.body.subject
+                    }
+                };
+                break;
+            case ('general'):
+                if(req.body.screenUrl) {
+                    msg = {
+                        to: req.body.recipientEmail,
+                        from: NOREPLY,
+                        subject: req.body.subject,
+                        text: req.body.message,
+                        html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+                        templateId: config.NOTIFY_TEMPLATE_1,
+                        dynamic_template_data: {
+                            screenUrl: req.body.screenUrl,
+                            message: req.body.message,
+                            subject: req.body.subject
+                        }
+                    };
+                    break;
+                } else {
+                    msg = {
+                        to: req.body.recipientEmail,
+                        from: NOREPLY,
+                        subject: req.body.subject,
+                        text: req.body.message,
+                        html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+                        templateId: config.NOTIFY_TEMPLATE_2,
+                        dynamic_template_data: {
+                            message: req.body.message,
+                            subject: req.body.subject
+                        }
+                    };
+                    break;
+                }
+            default:
+                msg = {
+                    to: req.body.recipientEmail,
+                    from: NOREPLY,
+                    subject: req.body.subject,
+                    text: req.body.message,
+                    html: `<strong>${req.body.message}</strong><br><a href=\"${req.body.screenUrl}\">Click Here!</a>`,
+                    templateId: config.NOTIFY_TEMPLATE_2,
+                    dynamic_template_data: {
+                        message: req.body.message,
+                        subject: req.body.subject
+                    }
+                };
+                break;
         }
 
         const response = await sendgrid.send(msg);
@@ -107,5 +161,5 @@ app.use(`/${config.SG_VERSION}/*`, auth.isBearerAuthenticated, async (req, res) 
 
 });
 
-app.listen(8080); // <-- for testing
-//module.exports.handler = serverless(app);
+//app.listen(8080); // <-- for testing
+module.exports.handler = serverless(app);

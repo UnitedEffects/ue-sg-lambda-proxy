@@ -13,7 +13,8 @@ const config = {
     OIDC: process.env.OIDC || envVars.OIDC || 'https://qa.ueauth.io/root',
     OIDC_CLIENT: process.env.OIDC_CLIENT || envVars.OIDC_CLIENT || undefined,
     OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET || envVars.OIDC_CLIENT_SECRET || undefined,
-    NOTIFY_PW_ID: process.env.NOTIFY_PW_ID || envVars.NOTIFY_PW_ID || undefined
+    NOTIFY_TEMPLATE_1: process.env.NOTIFY_TEMPLATE_1 || envVars.NOTIFY_TEMPLATE_1 || undefined,
+    NOTIFY_TEMPLATE_2: process.env.NOTIFY_TEMPLATE_2 || envVars.NOTIFY_TEMPLATE_2 || undefined
 };
 
 module.exports = config;
